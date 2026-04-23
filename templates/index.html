@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MediCore — Hospital Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- ============================================================ SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">⛨</div>
+    <div>
+      <div class="brand-name">MediCore</div>
+      <div class="brand-sub">HMS v2.0</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+      <span class="nav-icon">◈</span><span class="nav-label">Dashboard</span>
+    </a>
+
+    <div class="nav-section-label">Patients</div>
+    <a class="nav-item" data-page="patients" onclick="showPage('patients')">
+      <span class="nav-icon">◉</span><span class="nav-label">Patients</span>
+    </a>
+    <a class="nav-item" data-page="admissions" onclick="showPage('admissions')">
+      <span class="nav-icon">⌂</span><span class="nav-label">Admissions</span>
+    </a>
+    <a class="nav-item" data-page="emergency" onclick="showPage('emergency')">
+      <span class="nav-icon">⚠</span><span class="nav-label">Emergency</span>
+      <span class="nav-badge" id="emergencyBadge" style="display:none">0</span>
+    </a>
+
+    <div class="nav-section-label">Clinical</div>
+    <a class="nav-item" data-page="appointments" onclick="showPage('appointments')">
+      <span class="nav-icon">◷</span><span class="nav-label">Appointments</span>
+    </a>
+    <a class="nav-item" data-page="records" onclick="showPage('records')">
+      <span class="nav-icon">☰</span><span class="nav-label">Medical Records</span>
+    </a>
+    <a class="nav-item" data-page="labtests" onclick="showPage('labtests')">
+      <span class="nav-icon">⚗</span><span class="nav-label">Lab Tests</span>
+    </a>
+
+    <div class="nav-section-label">Resources</div>
+    <a class="nav-item" data-page="beds" onclick="showPage('beds')">
+      <span class="nav-icon">⊞</span><span class="nav-label">Bed Management</span>
+    </a>
+    <a class="nav-item" data-page="doctors" onclick="showPage('doctors')">
+      <span class="nav-icon">◎</span><span class="nav-label">Doctors</span>
+    </a>
+    <a class="nav-item" data-page="departments" onclick="showPage('departments')">
+      <span class="nav-icon">◧</span><span class="nav-label">Departments</span>
+    </a>
+
+    <div class="nav-section-label">Finance & Admin</div>
+    <a class="nav-item" data-page="billing" onclick="showPage('billing')">
+      <span class="nav-icon">₹</span><span class="nav-label">Billing</span>
+    </a>
+    <a class="nav-item" data-page="audit" onclick="showPage('audit')">
+      <span class="nav-icon">◫</span><span class="nav-label">Audit Log</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="status-dot"></div>
+    <span class="sidebar-footer-text">System Online</span>
+  </div>
+</aside>
+
+<!-- ============================================================ MAIN -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="time-display" id="timeDisplay"></div>
+      <button class="notif-btn" title="Notifications">
+        🔔<span class="notif-dot" id="notifDot" style="display:none"></span>
+      </button>
+      <div class="user-pill">
+        <div class="user-avatar">A</div>
+        <span>Admin</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================================================================
+       PAGE: DASHBOARD
+  ================================================================ -->
+  <section class="page active" id="page-dashboard">
+
+    <div class="section-header">
+      <div class="section-title-group">
+        <h2>Live Overview</h2>
+        <div class="section-subtitle" id="dashDate"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↻ Refresh</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card sc-blue"><div class="stat-label">Total Patients</div><div class="stat-value" id="sd-patients">—</div><div class="stat-change">Registered</div><div class="stat-icon-bg">◉</div></div>
+      <div class="stat-card sc-green"><div class="stat-label">Doctors on Staff</div><div class="stat-value" id="sd-doctors">—</div><div class="stat-change">Active</div><div class="stat-icon-bg">◎</div></div>
+      <div class="stat-card sc-amber"><div class="stat-label">Available Beds</div><div class="stat-value" id="sd-beds">—</div><div class="stat-change" id="sd-beds-sub"></div><div class="stat-icon-bg">⊞</div></div>
+      <div class="stat-card sc-red"><div class="stat-label">Active Emergencies</div><div class="stat-value" id="sd-emerg">—</div><div class="stat-change">Waiting / In Treatment</div><div class="stat-icon-bg">⚠</div></div>
+      <div class="stat-card sc-purple"><div class="stat-label">Today's Appointments</div><div class="stat-value" id="sd-appts">—</div><div class="stat-change">Scheduled today</div><div class="stat-icon-bg">◷</div></div>
+      <div class="stat-card sc-teal"><div class="stat-label">Pending Lab Tests</div><div class="stat-value" id="sd-labs">—</div><div class="stat-change">Awaiting results</div><div class="stat-icon-bg">⚗</div></div>
+      <div class="stat-card sc-orange"><div class="stat-label">Active Admissions</div><div class="stat-value" id="sd-admissions">—</div><div class="stat-change">Currently inpatient</div><div class="stat-icon-bg">⌂</div></div>
+      <div class="stat-card sc-pink"><div class="stat-label">Unpaid Bills</div><div class="stat-value" id="sd-bills">—</div><div class="stat-change">Pending payment</div><div class="stat-icon-bg">₹</div></div>
+    </div>
+
+    <div class="dash-row dash-row-2">
+      <div class="panel">
+        <div class="panel-title">Bed Occupancy <span>By ward type</span></div>
+        <div id="dashBedOcc"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Quick Actions</div>
+        <div class="quick-actions-grid">
+          <button class="qa-btn" onclick="showPage('patients');setTimeout(()=>openModal('addPatientModal'),80)">
+            <div class="qa-icon">◉</div><div class="qa-label">Register Patient</div><div class="qa-sub">Add new patient</div>
+          </button>
+          <button class="qa-btn" onclick="showPage('emergency');setTimeout(()=>openModal('addEmergencyModal'),80)">
+            <div class="qa-icon">⚠</div><div class="qa-label">New Emergency</div><div class="qa-sub">Critical triage</div>
+          </button>
+          <button class="qa-btn" onclick="showPage('appointments');setTimeout(()=>openModal('addApptModal'),80)">
+            <div class="qa-icon">◷</div><div class="qa-label">Book Appointment</div><div class="qa-sub">Schedule visit</div>
+          </button>
+          <button class="qa-btn" onclick="showPage('billing');setTimeout(()=>openModal('addBillingModal'),80)">
+            <div class="qa-icon">₹</div><div class="qa-label">New Bill</div><div class="qa-sub">Create invoice</div>
+          </button>
+          <button class="qa-btn" onclick="showPage('admissions');setTimeout(()=>openModal('addAdmissionModal'),80)">
+            <div class="qa-icon">⌂</div><div class="qa-label">Admit Patient</div><div class="qa-sub">Inpatient bed</div>
+          </button>
+          <button class="qa-btn" onclick="showPage('labtests');setTimeout(()=>openModal('addLabModal'),80)">
+            <div class="qa-icon">⚗</div><div class="qa-label">Order Lab Test</div><div class="qa-sub">Diagnostics</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-row dash-row-2b">
+      <div class="panel">
+        <div class="panel-title">Active Emergencies <span>Priority queue</span></div>
+        <div id="dashEmergency"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Today's Schedule <span>Upcoming appointments</span></div>
+        <div id="dashAppts"></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ================================================================
+       PAGE: PATIENTS
+  ================================================================ -->
+  <section class="page" id="page-patients">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Patient Registry</h2><div class="section-subtitle">All registered patients</div></div>
+      <div class="header-actions">
+        <input class="search-input" type="text" id="patientSearch" placeholder="Search name, phone, blood…" oninput="searchPatients()">
+        <button class="btn btn-primary" onclick="openModal('addPatientModal')">+ Register Patient</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Date of Birth</th><th>Blood Group</th><th>Phone</th><th>Email</th><th>Emergency Contact</th><th>Actions</th></tr></thead>
+          <tbody id="patientsBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="patientsPagination"></div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: DOCTORS
+  ================================================================ -->
+  <section class="page" id="page-doctors">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Medical Staff</h2><div class="section-subtitle">Registered doctors and specialists</div></div>
+      <button class="btn btn-primary" onclick="openModal('addDoctorModal')">+ Add Doctor</button>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Doctor</th><th>Specialization</th><th>Department</th><th>Phone</th><th>Email</th><th>Today's Appts</th><th>Actions</th></tr></thead>
+          <tbody id="doctorsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: DEPARTMENTS
+  ================================================================ -->
+  <section class="page" id="page-departments">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Departments</h2><div class="section-subtitle">Hospital departments and wards</div></div>
+      <button class="btn btn-primary" onclick="openModal('addDeptModal')">+ Add Department</button>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Department Name</th><th>Floor</th><th>Doctors</th><th>Actions</th></tr></thead>
+          <tbody id="deptsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: APPOINTMENTS
+  ================================================================ -->
+  <section class="page" id="page-appointments">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Appointments</h2><div class="section-subtitle">OPD scheduling with conflict detection</div></div>
+      <div class="header-actions">
+        <input type="date" class="select-inline" id="apptDateFilter" onchange="loadAppointments()">
+        <div class="filter-tabs">
+          <button class="ftab active" data-status="" onclick="apptFilter(this,'')">All</button>
+          <button class="ftab" data-status="Scheduled" onclick="apptFilter(this,'Scheduled')">Scheduled</button>
+          <button class="ftab" data-status="Completed" onclick="apptFilter(this,'Completed')">Completed</button>
+          <button class="ftab" data-status="Cancelled" onclick="apptFilter(this,'Cancelled')">Cancelled</button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addApptModal')">+ Book Appointment</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Doctor</th><th>Specialization</th><th>Scheduled</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="appointmentsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: EMERGENCY
+  ================================================================ -->
+  <section class="page" id="page-emergency">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Emergency Queue</h2><div class="section-subtitle">Priority triage — sorted by severity then arrival</div></div>
+      <div class="header-actions">
+        <div class="filter-tabs">
+          <button class="ftab active" onclick="emergFilter(this,'')">All</button>
+          <button class="ftab" onclick="emergFilter(this,'Waiting')">Waiting</button>
+          <button class="ftab" onclick="emergFilter(this,'In Treatment')">In Treatment</button>
+          <button class="ftab" onclick="emergFilter(this,'Discharged')">Discharged</button>
+        </div>
+        <button class="btn btn-danger" onclick="openModal('addEmergencyModal')">⚠ New Emergency</button>
+      </div>
+    </div>
+    <div class="triage-legend">
+      <span class="tl tl-1">Level 1 — Critical</span>
+      <span class="tl tl-2">Level 2 — Emergent</span>
+      <span class="tl tl-3">Level 3 — Urgent</span>
+      <span class="tl tl-4">Level 4 — Less Urgent</span>
+      <span class="tl tl-5">Level 5 — Non-Urgent</span>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Blood Group</th><th>Triage</th><th>Arrival Time</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="emergencyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: ADMISSIONS
+  ================================================================ -->
+  <section class="page" id="page-admissions">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Admissions</h2><div class="section-subtitle">Inpatient bed management</div></div>
+      <div class="header-actions">
+        <div class="filter-tabs">
+          <button class="ftab active" onclick="admFilter(this,'')">All</button>
+          <button class="ftab" onclick="admFilter(this,'active')">Active</button>
+          <button class="ftab" onclick="admFilter(this,'discharged')">Discharged</button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addAdmissionModal')">+ Admit Patient</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Blood Group</th><th>Bed</th><th>Ward</th><th>Type</th><th>Admitted</th><th>Discharged</th><th>Actions</th></tr></thead>
+          <tbody id="admissionsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: BEDS
+  ================================================================ -->
+  <section class="page" id="page-beds">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Bed Management</h2><div class="section-subtitle">Real-time ward availability</div></div>
+      <div class="header-actions">
+        <div class="filter-tabs">
+          <button class="ftab active" onclick="bedFilter(this,'')">All</button>
+          <button class="ftab" onclick="bedFilter(this,'General')">General</button>
+          <button class="ftab" onclick="bedFilter(this,'ICU')">ICU</button>
+          <button class="ftab" onclick="bedFilter(this,'Emergency')">Emergency</button>
+          <button class="ftab" onclick="bedFilter(this,'Private')">Private</button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addBedModal')">+ Add Bed</button>
+      </div>
+    </div>
+    <div class="beds-overview" id="bedsOverview"></div>
+    <div class="beds-grid" id="bedsGrid"></div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: LAB TESTS
+  ================================================================ -->
+  <section class="page" id="page-labtests">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Lab Tests</h2><div class="section-subtitle">Diagnostic orders and results</div></div>
+      <div class="header-actions">
+        <div class="filter-tabs">
+          <button class="ftab active" onclick="labFilter(this,'')">All</button>
+          <button class="ftab" onclick="labFilter(this,'Pending')">Pending</button>
+          <button class="ftab" onclick="labFilter(this,'Completed')">Completed</button>
+          <button class="ftab" onclick="labFilter(this,'Cancelled')">Cancelled</button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addLabModal')">+ Order Test</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Test Name</th><th>Ordered</th><th>Status</th><th>Result</th><th>Actions</th></tr></thead>
+          <tbody id="labBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: MEDICAL RECORDS
+  ================================================================ -->
+  <section class="page" id="page-records">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Medical Records <span class="hipaa-tag">HIPAA</span></h2><div class="section-subtitle">All accesses are logged to the audit trail</div></div>
+      <button class="btn btn-primary" onclick="openModal('addRecordModal')">+ Add Record</button>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Doctor</th><th>Diagnosis</th><th>Prescription</th><th>Notes</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: BILLING (NEW)
+  ================================================================ -->
+  <section class="page" id="page-billing">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Billing</h2><div class="section-subtitle">Patient invoices and payments</div></div>
+      <div class="header-actions">
+        <div class="filter-tabs">
+          <button class="ftab active" onclick="billFilter(this,'')">All</button>
+          <button class="ftab" onclick="billFilter(this,'Unpaid')">Unpaid</button>
+          <button class="ftab" onclick="billFilter(this,'Paid')">Paid</button>
+          <button class="ftab" onclick="billFilter(this,'Waived')">Waived</button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addBillingModal')">+ New Bill</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Description</th><th>Amount</th><th>Status</th><th>Created</th><th>Paid On</th><th>Actions</th></tr></thead>
+          <tbody id="billingBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       PAGE: AUDIT LOG
+  ================================================================ -->
+  <section class="page" id="page-audit">
+    <div class="section-header">
+      <div class="section-title-group"><h2>Audit Log <span class="hipaa-tag">HIPAA</span></h2><div class="section-subtitle">Complete access and modification trail</div></div>
+      <div class="header-actions">
+        <select class="select-inline" id="auditTableFilter" onchange="loadAudit()">
+          <option value="">All Tables</option>
+          <option value="Patients">Patients</option>
+          <option value="Doctors">Doctors</option>
+          <option value="Appointments">Appointments</option>
+          <option value="Emergency_Cases">Emergency</option>
+          <option value="Admissions">Admissions</option>
+          <option value="Medical_Records">Medical Records</option>
+          <option value="Lab_Tests">Lab Tests</option>
+          <option value="Billing">Billing</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Table</th><th>Action</th><th>Record ID</th><th>Performed By</th><th>Timestamp</th><th>Details</th></tr></thead>
+          <tbody id="auditBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main><!-- /main -->
+
+<!-- ================================================================
+     MODALS
+================================================================ -->
+
+<!-- ADD / EDIT PATIENT -->
+<div class="modal-overlay" id="addPatientModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="patientModalTitle">Register New Patient</h3>
+      <button class="modal-close" onclick="closeModal('addPatientModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="p_id">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="p_name" placeholder="Patient's full name"></div>
+        <div class="form-group"><label>Date of Birth</label><input type="date" id="p_dob"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Blood Group</label>
+          <select id="p_blood">
+            <option value="">— Select —</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="p_phone" placeholder="Mobile number"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" id="p_email" placeholder="Email address"></div>
+        <div class="form-group"><label>Emergency Contact</label><input type="tel" id="p_emergency" placeholder="Emergency phone"></div>
+      </div>
+      <div class="form-group"><label>Address</label><textarea id="p_address" rows="2" placeholder="Full address"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addPatientModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePatient()">Save Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT DOCTOR -->
+<div class="modal-overlay" id="addDoctorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="doctorModalTitle">Add Doctor</h3>
+      <button class="modal-close" onclick="closeModal('addDoctorModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="d_id">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="d_name" placeholder="Dr. Full Name"></div>
+        <div class="form-group"><label>Specialization</label><input type="text" id="d_spec" placeholder="e.g. Cardiology"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Department</label><select id="d_dept"><option value="">— Select —</option></select></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="d_phone" placeholder="Phone number"></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="d_email" placeholder="Doctor email"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addDoctorModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDoctor()">Save Doctor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD DEPARTMENT -->
+<div class="modal-overlay" id="addDeptModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Department</h3>
+      <button class="modal-close" onclick="closeModal('addDeptModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Name *</label><input type="text" id="dept_name" placeholder="Department name"></div>
+        <div class="form-group"><label>Floor</label><input type="number" id="dept_floor" placeholder="e.g. 2" min="1"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addDeptModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addDepartment()">Add Department</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOK APPOINTMENT -->
+<div class="modal-overlay" id="addApptModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Book Appointment</h3>
+      <button class="modal-close" onclick="closeModal('addApptModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Patient *</label><select id="a_patient"><option value="">Select patient</option></select></div>
+        <div class="form-group"><label>Doctor *</label><select id="a_doctor"><option value="">Select doctor</option></select></div>
+      </div>
+      <div class="form-group"><label>Date &amp; Time *</label><input type="datetime-local" id="a_datetime"></div>
+      <div class="form-group"><label>Reason for Visit</label><textarea id="a_reason" rows="2" placeholder="Chief complaint / purpose"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addApptModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="bookAppointment()">Book Appointment</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW EMERGENCY -->
+<div class="modal-overlay" id="addEmergencyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⚠ Register Emergency Case</h3>
+      <button class="modal-close" onclick="closeModal('addEmergencyModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Patient *</label><select id="e_patient"><option value="">Select patient</option></select></div>
+        <div class="form-group"><label>Triage Level *</label>
+          <select id="e_triage">
+            <option value="1">1 — Critical (Immediate)</option>
+            <option value="2">2 — Emergent (≤15 min)</option>
+            <option value="3" selected>3 — Urgent (≤30 min)</option>
+            <option value="4">4 — Less Urgent (≤1 hr)</option>
+            <option value="5">5 — Non-Urgent (≤2 hr)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Chief Complaint / Notes</label><textarea id="e_notes" rows="3" placeholder="Describe the emergency…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addEmergencyModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="addEmergency()">Register Emergency</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIT PATIENT -->
+<div class="modal-overlay" id="addAdmissionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Admit Patient</h3>
+      <button class="modal-close" onclick="closeModal('addAdmissionModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Patient *</label><select id="ad_patient"><option value="">Select patient</option></select></div>
+        <div class="form-group"><label>Assign Bed</label><select id="ad_bed"><option value="">No specific bed</option></select></div>
+      </div>
+      <div class="form-group"><label>Admission Notes</label><textarea id="ad_notes" rows="2" placeholder="Reason for admission, notes…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addAdmissionModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="admitPatient()">Admit Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BED -->
+<div class="modal-overlay" id="addBedModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Bed</h3>
+      <button class="modal-close" onclick="closeModal('addBedModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Ward</label><input type="text" id="b_ward" placeholder="e.g. A, ICU-West"></div>
+        <div class="form-group"><label>Bed Number *</label><input type="text" id="b_number" placeholder="e.g. A-101"></div>
+      </div>
+      <div class="form-group"><label>Bed Type</label>
+        <select id="b_type">
+          <option value="General">General</option>
+          <option value="ICU">ICU</option>
+          <option value="Emergency">Emergency</option>
+          <option value="Private">Private</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addBedModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addBed()">Add Bed</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER LAB TEST -->
+<div class="modal-overlay" id="addLabModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Order Lab Test</h3>
+      <button class="modal-close" onclick="closeModal('addLabModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Patient *</label><select id="l_patient"><option value="">Select patient</option></select></div>
+        <div class="form-group"><label>Test Name *</label><input type="text" id="l_test" placeholder="e.g. CBC, MRI, X-Ray, ECG"></div>
+      </div>
+      <div class="form-group"><label>Initial Notes</label><textarea id="l_result" rows="2" placeholder="Leave blank if pending results"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addLabModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addLabTest()">Order Test</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE LAB RESULT -->
+<div class="modal-overlay" id="updateLabModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Update Lab Result</h3>
+      <button class="modal-close" onclick="closeModal('updateLabModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ul_id">
+      <div class="form-group"><label>Test Result</label><textarea id="ul_result" rows="4" placeholder="Enter full test result here…"></textarea></div>
+      <div class="form-group"><label>Status</label>
+        <select id="ul_status">
+          <option value="Pending">Pending</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('updateLabModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateLabResult()">Save Result</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MEDICAL RECORD -->
+<div class="modal-overlay" id="addRecordModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>Add Medical Record</h3>
+      <button class="modal-close" onclick="closeModal('addRecordModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rec_id">
+      <div class="form-row">
+        <div class="form-group"><label>Patient *</label><select id="r_patient"><option value="">Select patient</option></select></div>
+        <div class="form-group"><label>Doctor *</label><select id="r_doctor"><option value="">Select doctor</option></select></div>
+      </div>
+      <div class="form-group"><label>Diagnosis</label><textarea id="r_diagnosis" rows="2" placeholder="Primary and secondary diagnoses"></textarea></div>
+      <div class="form-group"><label>Prescription</label><textarea id="r_prescription" rows="2" placeholder="Medicines, dosage, and duration"></textarea></div>
+      <div class="form-group"><label>Clinical Notes</label><textarea id="r_notes" rows="2" placeholder="Additional observations, follow-up instructions"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addRecordModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Save Record</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BILLING -->
+<div class="modal-overlay" id="addBillingModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Create Bill</h3>
+      <button class="modal-close" onclick="closeModal('addBillingModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Patient *</label><select id="bill_patient"><option value="">Select patient</option></select></div>
+        <div class="form-group"><label>Amount (₹) *</label><input type="number" id="bill_amount" placeholder="0.00" min="0" step="0.01"></div>
+      </div>
+      <div class="form-group"><label>Description</label><input type="text" id="bill_desc" placeholder="e.g. Consultation, Surgery, Lab Tests"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addBillingModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addBill()">Create Bill</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
