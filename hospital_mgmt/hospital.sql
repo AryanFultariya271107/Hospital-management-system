@@ -1,10 +1,3 @@
--- ============================================================
---  MediCore — Hospital Management System
---  MySQL Schema (v2 Improved)
---  Compatible with XAMPP / phpMyAdmin
---  Import via: phpMyAdmin > Import > Select this file > Go
--- ============================================================
-
 CREATE DATABASE IF NOT EXISTS hospital_mgmt
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
