@@ -69,7 +69,7 @@ The project is built using:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/hospital-management-system.git
+git clone https://github.com/AryanFultariya271107/Hospital-management-system.git
 cd hospital-management-system
 ```
 
