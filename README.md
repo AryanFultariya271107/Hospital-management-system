@@ -2,7 +2,7 @@
 
 ## 📌 Project Details
 
-This is a simple web-based Hospital Management System developed as a college project.
+This is a simple web-based Hospital Management System.
 It is designed to manage basic hospital activities in an organized way using a database.
 
 The system allows users to store, update, and manage hospital data such as patients, doctors, and appointments.
